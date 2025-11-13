@@ -40,19 +40,27 @@ fn main() {
 
     let mut upstreams =
         LoadBalancer::try_from_iter(["1.1.1.1:443", "1.0.0.1:443", "127.0.0.1:343"]).unwrap();
-    
+
     let hc = TcpHealthCheck::new();
     upstreams.set_health_check(hc);
     upstreams.health_check_frequency = Some(std::time::Duration::from_secs(1));
 
     let background = background_service("health check", upstreams);
+
     let upstreams = background.task();
 
     let mut lb = http_proxy_service(&my_server.configuration, LB(upstreams));
     lb.add_tcp("0.0.0.0:6188");
 
-    my_server.add_service(background);
+    let cert_path = format!("{}/tests/keys/server.crt", env!("CARGO_MANIFEST_DIR"));
+    let key_path = format!("{}/tests/keys/key.pem", env!("CARGO_MANIFEST_DIR"));
+
+    let mut tls_settings =
+        pingora_core::listeners::tls::TlsSettings::intermediate(&cert_path, &key_path).unwrap();
+    tls_settings.enable_h2();
+    lb.add_tls_with_settings("0.0.0.0:6189", None, tls_settings);
 
     my_server.add_service(lb);
+    my_server.add_service(background);
     my_server.run_forever();
 }

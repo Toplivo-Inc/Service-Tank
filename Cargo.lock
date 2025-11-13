@@ -1518,6 +1518,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "pingora",
+ "pingora-core",
 ]
 
 [[package]]
