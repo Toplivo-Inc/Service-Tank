@@ -5,5 +5,6 @@ edition = "2024"
 
 [dependencies]
 async-trait="0.1"
+clap = { version = "4.5.51", features = ["derive"] }
 pingora = { version = "0.6.0", features = [ "lb", "openssl" ] }
 pingora-core = "0.6.0"
